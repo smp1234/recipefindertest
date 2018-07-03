@@ -1,0 +1,87 @@
+package com.recipefinder.model;
+
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.util.Comparator;
+import java.util.Date;
+import java.util.PriorityQueue;
+
+import org.springframework.data.annotation.Id;
+
+@Document(collection="UndetectedItem")
+public class UndetectedItem {
+	@Id
+	private String Id;
+	private String fileName;
+	private User creator;
+	private PriorityQueue<UnknownEntry> guessedItems;
+	private Date entryDate;
+	
+	public UndetectedItem() {
+		this.guessedItems = new PriorityQueue<>(new UnknownEntry());
+	}
+	
+	public UndetectedItem(String fileName, User creator) {
+		this.fileName = fileName;
+		this.creator = creator;
+		this.guessedItems = new PriorityQueue<>(new UnknownEntry());
+		this.entryDate = new Date();
+	}
+
+	public String getFileName() {
+		return fileName;
+	}
+
+	public void setFileName(String fileName) {
+		this.fileName = fileName;
+	}
+
+	public User getCreator() {
+		return creator;
+	}
+
+	public void setCreator(User creator) {
+		this.creator = creator;
+	}
+
+	public PriorityQueue<UnknownEntry> getGuessedItems() {
+		return guessedItems;
+	}
+
+	public void setGuessedItems(PriorityQueue<UnknownEntry> guessedItems) {
+		this.guessedItems = guessedItems;
+	}
+
+	public Date getEntryDate() {
+		return entryDate;
+	}
+
+	public void setEntryDate(Date entryDate) {
+		this.entryDate = entryDate;
+	}
+	
+	
+}
+
+class UnknownEntry implements Comparator<UnknownEntry>{
+	private String name;
+	private int votes;
+	
+	public UnknownEntry(String name, int votes) {		
+		this.name = name;
+		this.votes = votes;
+	}
+	
+	public UnknownEntry() {}
+
+	@Override
+	public int compare(UnknownEntry o1, UnknownEntry o2) {
+		// TODO Auto-generated method stub
+		return o2.votes - o1.votes;
+	}
+	
+	@Override
+	public String toString() {
+		return this.name + " " +this.votes;
+	}
+}
