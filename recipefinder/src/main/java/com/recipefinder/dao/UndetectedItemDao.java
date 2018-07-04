@@ -21,4 +21,26 @@ public class UndetectedItemDao {
 		}
 		return status;	
 	}
+	
+	public UndetectedItem getItemByName(String fileName) {
+		UndetectedItem item = null;
+		try {
+			item = undetectedItemRepository.findUndetectedItemByFileName(fileName);
+		}catch (Exception e) {
+			e.printStackTrace();			
+		}
+		return item;
+	}
+	
+	public boolean updateItem(UndetectedItem item) {
+		boolean status = false;
+		try {
+			
+			undetectedItemRepository.save(item);
+		} catch (Exception e) {
+			e.printStackTrace();
+			status = false;
+		}
+		return status;
+	}
 }

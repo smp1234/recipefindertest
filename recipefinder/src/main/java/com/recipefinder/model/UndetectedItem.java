@@ -2,7 +2,6 @@ package com.recipefinder.model;
 
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.Comparator;
 import java.util.Date;
 import java.util.PriorityQueue;
 
@@ -61,27 +60,4 @@ public class UndetectedItem {
 	}
 	
 	
-}
-
-class UnknownEntry implements Comparator<UnknownEntry>{
-	private String name;
-	private int votes;
-	
-	public UnknownEntry(String name, int votes) {		
-		this.name = name;
-		this.votes = votes;
-	}
-	
-	public UnknownEntry() {}
-
-	@Override
-	public int compare(UnknownEntry o1, UnknownEntry o2) {
-		// TODO Auto-generated method stub
-		return o2.votes - o1.votes;
-	}
-	
-	@Override
-	public String toString() {
-		return this.name + " " +this.votes;
-	}
 }

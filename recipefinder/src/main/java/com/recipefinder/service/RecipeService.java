@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Iterator;
 import java.nio.file.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +18,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.recipefinder.dao.RecipeDao;
 import com.recipefinder.dao.UndetectedItemDao;
 import com.recipefinder.dao.UserDao;
+import com.recipefinder.model.UndetectedItem;
+import com.recipefinder.model.UnknownEntry;
 import com.recipefinder.model.User;
 @Service
 public class RecipeService {
@@ -26,6 +29,8 @@ public class RecipeService {
 	private UserDao userDao;
 	@Autowired
 	private UndetectedItemDao undetectedItemDao;
+	@Autowired
+	private UndetectedItem item;
 	
 	private static int userId = 0;
 	
@@ -130,11 +135,35 @@ public class RecipeService {
 	public boolean handleVote(String fileName, String vote) {
 		boolean status = false;
 		try {
-			
+			item = undetectedItemDao.getItemByName(fileName);
+			Iterator<UnknownEntry> iterator = item.getGuessedItems().iterator();
+			while (iterator.hasNext()) {
+				UnknownEntry temp = iterator.next();
+				if(temp.getName().equals(vote)) {
+					temp.setVotes(temp.getVotes() + 1);
+					if(temp.getVotes() >= 3) {
+						handleDetection();
+					}	
+					return true;
+				}
+			}
+			item.getGuessedItems().offer(new UnknownEntry(vote, 1));
+			undetectedItemDao.updateItem(item);
+			status = true;
 		} catch (Exception e) {
 			e.printStackTrace();
 			status = false;
 		}
 		return status;
+	}
+	
+	public boolean handleDetection() {
+		// TODO: implement logic for reaching vote threshold for an undetected item
+		return false;
+	}
+	
+	public boolean checkForExpiry() {
+		// TODO: implement logic to remove expired entries from DB and folders 
+		return false;
 	}
 }
