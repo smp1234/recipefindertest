@@ -1,5 +1,6 @@
 package com.recipefinder.model;
 
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.Date;
@@ -10,7 +11,8 @@ import org.springframework.data.annotation.Id;
 @Document(collection="UndetectedItem")
 public class UndetectedItem {
 	@Id
-	private String Id;
+	private String Id;	
+	@Indexed(unique = true)
 	private String fileName;
 	private User creator;
 	private PriorityQueue<UnknownEntry> guessedItems;
@@ -25,6 +27,14 @@ public class UndetectedItem {
 		this.creator = creator;
 		this.guessedItems = new PriorityQueue<>(new UnknownEntry());
 		this.entryDate = new Date();
+	}
+	
+	public String getId() {
+		return Id;
+	}
+
+	public void setId(String id) {
+		Id = id;
 	}
 
 	public String getFileName() {

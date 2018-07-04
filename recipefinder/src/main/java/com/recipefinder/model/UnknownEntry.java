@@ -2,7 +2,7 @@ package com.recipefinder.model;
 
 import java.util.Comparator;
 
-public class UnknownEntry implements Comparator<UnknownEntry>{
+public class UnknownEntry implements Comparator<UnknownEntry>, Comparable<UnknownEntry>{
 	private String name;
 	private int votes;
 	
@@ -31,12 +31,18 @@ public class UnknownEntry implements Comparator<UnknownEntry>{
 
 	@Override
 	public int compare(UnknownEntry o1, UnknownEntry o2) {
-		// TODO Auto-generated method stub
+		
 		return o2.votes - o1.votes;
 	}
 	
 	@Override
 	public String toString() {
 		return this.name + " " +this.votes;
+	}
+
+	@Override
+	public int compareTo(UnknownEntry o) {
+		
+		return o.votes - this.votes;
 	}
 }
