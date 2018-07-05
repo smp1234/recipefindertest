@@ -20,9 +20,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.recipefinder.dao.NotificationDao;
 import com.recipefinder.dao.RecipeDao;
 import com.recipefinder.dao.UndetectedItemDao;
 import com.recipefinder.dao.UserDao;
+import com.recipefinder.dao.VoteDao;
 import com.recipefinder.model.UndetectedItem;
 import com.recipefinder.model.UnknownEntry;
 import com.recipefinder.model.User;
@@ -36,14 +38,20 @@ public class RecipeService {
 	private UndetectedItemDao undetectedItemDao;
 	@Autowired
 	private UndetectedItem item;
+	@Autowired
+	private VoteDao voteDao;
+	@Autowired
+	private NotificationDao notificationDao;
 	
 	private static int userId = 0;
+	private static int globalNotificationCount = 0;
 	
 	public int getUserId(String emailId) {
 		User user = userDao.getUserByEmailId(emailId);
 		if(user == null) {
 			userId += 1;			
 			userDao.addUser(emailId, userId);
+			notificationDao.createEntry(userId, globalNotificationCount);
 			return userId;
 		}
 		return user.getUserId();	
@@ -134,7 +142,8 @@ public class RecipeService {
 		try {
 			Path path = Files.move(Paths.get(image.getPath()), Paths.get(newPath));
 			status = undetectedItemDao.addItem(path.getFileName().toString(), userDao.getUserByUserId(userId));
-			sendNotification();
+			globalNotificationCount += 1;
+			sendNotification(userId);
 		} catch (Exception e) {
 			status = false;
 			e.printStackTrace();
@@ -142,7 +151,7 @@ public class RecipeService {
 		return status;
 	}
 	
-	public boolean handleVote(String fileName, String vote) {
+	public boolean handleVote(String fileName, String vote, int userId) {
 		boolean status = false;
 		try {
 			item = undetectedItemDao.getItemByName(fileName);
@@ -153,13 +162,18 @@ public class RecipeService {
 					temp.setVotes(temp.getVotes() + 1);
 					if(temp.getVotes() >= 3) {
 						handleDetection(item.getCreator().getUserId() + "_" + fileName, vote);
-					}	
+					}					
 					return true;
 				}
 			}
 			item.getGuessedItems().offer(new UnknownEntry(vote, 1));
 			undetectedItemDao.updateItem(item);
-			status = true;
+			if(voteDao.checkUserExistance(userId) == false) {
+				status = voteDao.addVote(userId, fileName);
+			}
+			else {
+				status = voteDao.updateVote(userId, fileName);
+			}			
 		} catch (Exception e) {
 			e.printStackTrace();
 			status = false;
@@ -215,8 +229,11 @@ public class RecipeService {
 		return result;
 	}
 	
-	public void sendNotification() {
-		// TODO: send notification that a new file has been added.
+	public boolean sendNotification(int userId) {
+		if(notificationDao.getNotificationCount(userId) < globalNotificationCount) {
+			return true;
+		}
+		return false;
 	}
 		
 }
