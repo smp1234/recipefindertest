@@ -12,7 +12,7 @@ public class UserDao {
 	public User getUserByUserId(int userId) {
 		User user = null;
 		try {
-			user = userRepository.findByUserId(userId);
+			user = userRepository.findUserByUserId(userId);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -21,7 +21,7 @@ public class UserDao {
 	}
 	
 	public User getUserByEmailId(String emailId) {
-		User user = userRepository.findByEmailId(emailId);
+		User user = userRepository.findUserByEmailId(emailId);
 		return user;
 	}
 	

@@ -11,10 +11,9 @@ public class NotificationDao {
 	@Autowired
 	private NotificationRepository notificationRepository;
 	
-	public boolean createEntry(int userId, long notifications) {
+	public boolean createEntry(User user, long notifications) {
 		boolean status = false;
-		try {
-			User user =  new UserDao().getUserByUserId(userId);
+		try {			
 			notificationRepository.save(new Notification(user, notifications));
 			status = true;
 		} catch (Exception e) {
@@ -23,7 +22,7 @@ public class NotificationDao {
 		return status;
 	}
 	
-	public long getNotificationCount(int userId) {
-		return notificationRepository.findByUser(new UserDao().getUserByUserId(userId)).getNoOfNotifications();
+	public long getNotificationCount(User user) {
+		return notificationRepository.findByUser(user).getNoOfNotifications();
 	}
 }

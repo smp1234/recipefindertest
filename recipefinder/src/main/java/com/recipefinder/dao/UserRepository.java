@@ -7,7 +7,7 @@ import com.recipefinder.model.User;
 
 public interface UserRepository extends MongoRepository<User, String>{
 	@Query("{'userId' : ?0}")
-	public User findByUserId(Integer userId);
-	public User findByEmailId(String emailId);
+	public User findUserByUserId(Integer userId);
+	public User findUserByEmailId(String emailId);
 	
 }

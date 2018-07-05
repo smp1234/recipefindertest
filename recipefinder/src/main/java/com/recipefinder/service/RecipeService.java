@@ -49,9 +49,8 @@ public class RecipeService {
 		User user = userDao.getUserByEmailId(emailId);
 		if(user == null) {
 			userId += 1;			
-			userDao.addUser(emailId, userId);
-			System.out.println(userDao.getUserByUserId(userId));
-			notificationDao.createEntry(userId, globalNotificationCount);
+			userDao.addUser(emailId, userId);			
+			notificationDao.createEntry(userDao.getUserByUserId(userId), globalNotificationCount);
 			return userId;
 		}
 		return user.getUserId();	
@@ -235,7 +234,7 @@ public class RecipeService {
 	
 	public String sendNotification(int userId) {
 		
-		return Long.toString(globalNotificationCount - notificationDao.getNotificationCount(userId));
+		return Long.toString(globalNotificationCount - notificationDao.getNotificationCount(userDao.getUserByUserId(userId)));
 	}
 	
 	public String Test() {
