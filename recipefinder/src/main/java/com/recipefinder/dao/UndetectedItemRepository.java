@@ -7,5 +7,6 @@ import com.recipefinder.model.UndetectedItem;
 public interface UndetectedItemRepository extends MongoRepository<UndetectedItem, String>{
 	
 	public UndetectedItem findUndetectedItemByFileName(String fileName);
+	public void deleteByFileName(String fileName);
 	
 }

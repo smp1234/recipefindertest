@@ -7,7 +7,12 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 import java.nio.file.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -77,7 +82,11 @@ public class RecipeService {
 				return response;
 			}
 			response = getDBRecipe(recipeName);
-			
+			try {
+				Files.delete(Paths.get(image.getPath()));
+			} catch (IOException e) {				
+				e.printStackTrace();
+			}
 			return response;
 		}		
 	}
@@ -124,7 +133,7 @@ public class RecipeService {
 		String newPath = "./undetected/" + userId +"_" + image.getName();
 		try {
 			Path path = Files.move(Paths.get(image.getPath()), Paths.get(newPath));
-			undetectedItemDao.addItem(path.getFileName().toString(), userDao.getUserByUserId(userId));
+			status = undetectedItemDao.addItem(path.getFileName().toString(), userDao.getUserByUserId(userId));
 		} catch (Exception e) {
 			status = false;
 			e.printStackTrace();
@@ -142,7 +151,7 @@ public class RecipeService {
 				if(temp.getName().equals(vote)) {
 					temp.setVotes(temp.getVotes() + 1);
 					if(temp.getVotes() >= 3) {
-						handleDetection();
+						handleDetection(item.getCreator().getUserId() + "_" + fileName, vote);
 					}	
 					return true;
 				}
@@ -157,13 +166,52 @@ public class RecipeService {
 		return status;
 	}
 	
-	public boolean handleDetection() {
-		// TODO: implement logic for reaching vote threshold for an undetected item
-		return false;
+	public boolean handleDetection(String filePath, String result) {
+		
+		boolean status = false;
+		try {
+			// Create a directory with name of result
+			File dir = new File("./dataset/" + result);
+			dir.mkdir();
+			// Move file to new directory (If there exists a file with same name it will be replaced.)
+			Files.move(Paths.get("./undetected/" + filePath), Paths.get("./dataset/" + result +"/" + filePath), StandardCopyOption.REPLACE_EXISTING);
+			// Delete entry from database
+			status = undetectedItemDao.deleteItem(filePath);
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			status = false;
+		}
+		return status;
 	}
 	
-	public boolean checkForExpiry() {
-		// TODO: implement logic to remove expired entries from DB and folders 
-		return false;
+	public boolean checkForExpiry(String fileName) {
+		boolean status = false;
+		try {
+			
+			item = undetectedItemDao.getItemByName(fileName);
+			long diff = Math.abs(new Date().getTime() - item.getEntryDate().getTime());
+			long days = TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS);
+			if(days >= 3)
+				status = undetectedItemDao.deleteItem(fileName);
+			else
+				status = true;
+			
+		} catch (Exception e) {
+			e.printStackTrace();
+			status = false;
+		}			
+		return status;
 	}
+	
+	public HashSet<String> getAllUndetectedItems(){
+		HashSet<String> result = new HashSet<>();
+		HashMap<String, Integer> list = undetectedItemDao.getAllUndetectedItems();
+		for(Entry<String, Integer> entry: list.entrySet()) {
+			String path = "./undetected/" + entry.getValue() +"_" + entry.getKey();
+			result.add(path);
+		}
+		return result;
+	}
+		
 }
