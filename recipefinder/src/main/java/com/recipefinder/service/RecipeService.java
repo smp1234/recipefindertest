@@ -2,22 +2,20 @@ package com.recipefinder.service;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
-import java.nio.file.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.recipefinder.dao.NotificationDao;
@@ -43,6 +41,7 @@ public class RecipeService {
 	@Autowired
 	private NotificationDao notificationDao;
 	
+	
 	private static int userId = 0;
 	private static int globalNotificationCount = 0;
 	
@@ -51,22 +50,27 @@ public class RecipeService {
 		if(user == null) {
 			userId += 1;			
 			userDao.addUser(emailId, userId);
+			System.out.println(userDao.getUserByUserId(userId));
 			notificationDao.createEntry(userId, globalNotificationCount);
 			return userId;
 		}
 		return user.getUserId();	
 	}
-	
-	public String getRecipe(MultipartFile multipartImage, int userId) {
+	public String getRecipe(File multipartImage, int userId) {
+	//public String getRecipe(MultipartFile multipartImage, int userId) {
 		// Receive image
-		File image = new File("./images/"+multipartImage.getOriginalFilename());
+		// File image = new File("./images/"+multipartImage.getOriginalFilename());
 
+		File image = null;
 		boolean op = false;
 		try {
-			image.createNewFile();
-			FileOutputStream outputStream = new FileOutputStream(image);
-			outputStream.write(multipartImage.getBytes());
-			outputStream.close();
+//			image.createNewFile();
+//			FileOutputStream outputStream = new FileOutputStream(image);
+//			outputStream.write(multipartImage.getBytes());
+			
+//			outputStream.close();
+			Files.copy(Paths.get(multipartImage.getPath()), Paths.get("./images/"+multipartImage.getName()), StandardCopyOption.REPLACE_EXISTING);
+			image = new File("./images/" + multipartImage.getName());
 			op = true;
 
 		} catch (Exception e) {			
@@ -140,7 +144,7 @@ public class RecipeService {
 		boolean status = false;		
 		String newPath = "./undetected/" + userId +"_" + image.getName();
 		try {
-			Path path = Files.move(Paths.get(image.getPath()), Paths.get(newPath));
+			Path path = Files.move(Paths.get(image.getPath()), Paths.get(newPath),StandardCopyOption.REPLACE_EXISTING);
 			status = undetectedItemDao.addItem(path.getFileName().toString(), userDao.getUserByUserId(userId));
 			globalNotificationCount += 1;
 			sendNotification(userId);
@@ -219,21 +223,26 @@ public class RecipeService {
 		return status;
 	}
 	
-	public HashSet<String> getAllUndetectedItems(){
-		HashSet<String> result = new HashSet<>();
+	public HashMap<String, String> getAllUndetectedItems(){
+		HashMap<String,String> result = new HashMap<>();
 		HashMap<String, Integer> list = undetectedItemDao.getAllUndetectedItems();
 		for(Entry<String, Integer> entry: list.entrySet()) {
 			String path = "./undetected/" + entry.getValue() +"_" + entry.getKey();
-			result.add(path);
+			result.put(entry.getKey(),path);
 		}
 		return result;
 	}
 	
-	public boolean sendNotification(int userId) {
-		if(notificationDao.getNotificationCount(userId) < globalNotificationCount) {
-			return true;
-		}
-		return false;
+	public String sendNotification(int userId) {
+		
+		return Long.toString(globalNotificationCount - notificationDao.getNotificationCount(userId));
+	}
+	
+	public String Test() {
+		int userId = getUserId("spatel");
+		File file = new File("./test/fal.jpg");
+		getRecipe(file, userId);
+		return "HI";
 	}
 		
 }

@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import com.recipefinder.model.Notification;
+import com.recipefinder.model.User;
 
 @Repository
 public class NotificationDao {
@@ -13,7 +14,8 @@ public class NotificationDao {
 	public boolean createEntry(int userId, long notifications) {
 		boolean status = false;
 		try {
-			notificationRepository.save(new Notification(new UserDao().getUserByUserId(userId), notifications));
+			User user =  new UserDao().getUserByUserId(userId);
+			notificationRepository.save(new Notification(user, notifications));
 			status = true;
 		} catch (Exception e) {
 			e.printStackTrace();

@@ -10,7 +10,13 @@ public class UserDao {
 	private UserRepository userRepository;	
 	
 	public User getUserByUserId(int userId) {
-		User user = userRepository.findByUserId(userId);
+		User user = null;
+		try {
+			user = userRepository.findByUserId(userId);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
 		return user;
 	}
 	

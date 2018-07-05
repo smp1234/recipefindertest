@@ -1,5 +1,7 @@
 package com.recipefinder.controller;
 
+import java.io.File;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,7 +30,7 @@ public class RecipeController {
 
 
 		
-		String response=recipeService.getRecipe(file,uid);
+		String response=recipeService.getRecipe((File)file,uid);
 		
 		try {
 			
@@ -47,7 +49,8 @@ public class RecipeController {
 	
 	@GetMapping(value="/check")
 	public String checking() {
-		return "HI";
+		System.out.print("Inside Check...");
+		return recipeService.Test();
 	}
 	
 }
