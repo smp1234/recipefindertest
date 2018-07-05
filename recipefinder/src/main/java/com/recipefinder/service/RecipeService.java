@@ -134,6 +134,7 @@ public class RecipeService {
 		try {
 			Path path = Files.move(Paths.get(image.getPath()), Paths.get(newPath));
 			status = undetectedItemDao.addItem(path.getFileName().toString(), userDao.getUserByUserId(userId));
+			sendNotification();
 		} catch (Exception e) {
 			status = false;
 			e.printStackTrace();
@@ -212,6 +213,10 @@ public class RecipeService {
 			result.add(path);
 		}
 		return result;
+	}
+	
+	public void sendNotification() {
+		// TODO: send notification that a new file has been added.
 	}
 		
 }
