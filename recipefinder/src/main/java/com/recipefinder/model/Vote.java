@@ -3,7 +3,6 @@ package com.recipefinder.model;
 import java.util.HashSet;
 
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.stereotype.Component;
 
@@ -12,7 +11,7 @@ import org.springframework.stereotype.Component;
 public class Vote {
 	@Id
 	private String Id;
-	@Indexed(unique=true)
+	
 	private User voter;
 	private HashSet<UndetectedItem> items;
 	

@@ -1,6 +1,5 @@
 package com.recipefinder.model;
 
-import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.stereotype.Component;
 
@@ -13,7 +12,7 @@ import org.springframework.data.annotation.Id;
 public class UndetectedItem {
 	@Id
 	private String Id;	
-	@Indexed(unique = true)
+	
 	private String fileName;
 	private User creator;
 	private PriorityQueue<UnknownEntry> guessedItems;

@@ -1,5 +1,6 @@
 package com.recipefinder.dao;
 
+import java.util.List;
 import java.util.HashMap;
 import java.util.Iterator;
 
@@ -66,6 +67,11 @@ public class UndetectedItemDao {
 			UndetectedItem temp = iterator.next();
 			list.put(temp.getFileName(), temp.getCreator().getUserId());
 		}
+		return list;
+	}
+	
+	public List<UndetectedItem> getItemsByCreator(User creator){
+		List<UndetectedItem> list = undetectedItemRepository.findAllByCreator(creator);
 		return list;
 	}
 }

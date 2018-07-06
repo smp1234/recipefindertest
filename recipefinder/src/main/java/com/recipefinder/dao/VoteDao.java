@@ -1,5 +1,6 @@
 package com.recipefinder.dao;
 
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 
@@ -56,5 +57,12 @@ public class VoteDao {
 		}
 		
 		return exist;
+	}
+	
+	public HashSet<UndetectedItem> getVotedItems(User user){
+		Vote vote = voteRepository.findByVoter(user);
+		if(vote == null)
+			return null;
+		return vote.getItems();
 	}
 }

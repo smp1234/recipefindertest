@@ -1,7 +1,5 @@
 package com.recipefinder.controller;
 
-import java.io.File;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,13 +22,19 @@ public class RecipeController {
 	 * Send recipe reponse to client
 	 * 
 	 */
+	@GetMapping("/login")
+	public int login(String emailId) {
+		return recipeService.getUserId(emailId);
+	}
+	
+	@PostMapping("/signup")
+	public int signup(String emailId) {
+		return recipeService.getUserId(emailId);
+	}
 
 	@PostMapping("/upload")
 	public String getRecipe(@RequestParam("file") MultipartFile file, @RequestParam("uid") int uid) {
-
-
-		
-		String response=recipeService.getRecipe((File)file,uid);
+		String response=recipeService.getRecipe(file,uid);
 		
 		try {
 			
@@ -38,13 +42,23 @@ public class RecipeController {
 		} catch (Exception e) {
 			response = "No recipe found!";
 
-		
-		
-		
-		
 			return response;
 		}
 		
+	}
+	
+	@GetMapping("/getundetecteditems")
+	public String getUndetectedItems(int userId) {
+		return recipeService.getUndetectedItemsForUser(userId).toString();
+	}
+	
+	@PostMapping("/vote")
+	public String addVote(String fileName, String vote, int userId) {
+		boolean status = recipeService.handleVote(fileName, vote, userId);
+		if(status)
+			return "Vote added successfully";
+		else
+			return "Error in adding vote!";
 	}
 	
 	@GetMapping(value="/check")

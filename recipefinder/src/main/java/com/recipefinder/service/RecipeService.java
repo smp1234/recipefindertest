@@ -1,5 +1,6 @@
 package com.recipefinder.service;
 
+import java.util.List;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -10,6 +11,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
@@ -173,6 +175,12 @@ public class RecipeService {
 					else {
 						undetectedItemDao.updateItem(item);
 					}
+					if(voteDao.checkUserExistance(userId) == false) {
+						status = voteDao.addVote(userDao.getUserByUserId(userId), undetectedItemDao.getItemByName(fileName));
+					}
+					else {
+						status = voteDao.updateVote(userDao.getUserByUserId(userId), undetectedItemDao.getItemByName(fileName));
+					}
 					return true;
 				}
 			}
@@ -235,6 +243,21 @@ public class RecipeService {
 		for(Entry<String, Integer> entry: list.entrySet()) {
 			String path = "./undetected/" + entry.getValue() +"_" + entry.getKey();
 			result.put(entry.getKey(),path);
+		}
+		return result;
+	}
+	
+	public HashMap<String, String> getUndetectedItemsForUser(int uid){		
+		HashMap<String, String> result = getAllUndetectedItems();
+		HashSet<UndetectedItem> votedItems = voteDao.getVotedItems(userDao.getUserByUserId(uid));
+		if(votedItems != null) {
+			for(UndetectedItem undetectedItem: votedItems)
+				result.remove(undetectedItem.getFileName());
+		}
+		List<UndetectedItem> itemsCreatedByUser = undetectedItemDao.getItemsByCreator(userDao.getUserByUserId(uid));
+		if(itemsCreatedByUser != null) {
+			for(UndetectedItem undetectedItem: itemsCreatedByUser)
+				result.remove(undetectedItem.getFileName());
 		}
 		return result;
 	}

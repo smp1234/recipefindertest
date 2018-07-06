@@ -10,8 +10,7 @@ import org.springframework.stereotype.Component;
 public class Notification {
 	@Id
 	private String Id;
-	
-	@Indexed(unique=true)
+		
 	private User user;
 	private long noOfNotifications;
 	public String getId() {
