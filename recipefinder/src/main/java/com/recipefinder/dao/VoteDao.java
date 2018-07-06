@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import com.recipefinder.model.UndetectedItem;
+import com.recipefinder.model.User;
 import com.recipefinder.model.Vote;
 
 @Repository
@@ -15,11 +16,10 @@ public class VoteDao {
 	@Autowired
 	private VoteRepository voteRepository;
 	
-	public boolean addVote(int uid, String fileName) {
+	public boolean addVote(User user, UndetectedItem item) {
 		boolean status = false;
-		try {			
-			UndetectedItem item = new UndetectedItemDao().getItemByName(fileName);
-			voteRepository.save(new Vote(new UserDao().getUserByUserId(uid), item));
+		try {						
+			voteRepository.save(new Vote(user, item));
 			status = true;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -28,11 +28,11 @@ public class VoteDao {
 		return status;
 	}
 	
-	public boolean updateVote(int uid, String fileName) {
+	public boolean updateVote(User user, UndetectedItem item) {
 		boolean status = false;
 		try {
-			Vote vote = voteRepository.findByVoter(new UserDao().getUserByUserId(uid));
-			vote.getItems().add(new UndetectedItemDao().getItemByName(fileName));
+			Vote vote = voteRepository.findByVoter(user);
+			vote.getItems().add(item);
 			voteRepository.save(vote);
 			status = true;
 		} catch (Exception e) {

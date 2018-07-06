@@ -20,9 +20,21 @@ public class NotificationDao {
 			e.printStackTrace();
 		}
 		return status;
+	}		
+	
+	public Notification getNotificationEntry(User user) {
+		return notificationRepository.findByUser(user);
 	}
 	
-	public long getNotificationCount(User user) {
-		return notificationRepository.findByUser(user).getNoOfNotifications();
+	public boolean updateNotificationCount(Notification notification) {
+		boolean status = false;
+		try {
+			notificationRepository.save(notification);
+			status = true;
+		} catch (Exception e) {
+			e.printStackTrace();
+			status = false;
+		}
+		return status;		
 	}
 }

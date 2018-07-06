@@ -2,10 +2,10 @@ package com.recipefinder.service;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Date;
@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.recipefinder.dao.NotificationDao;
@@ -23,6 +24,7 @@ import com.recipefinder.dao.RecipeDao;
 import com.recipefinder.dao.UndetectedItemDao;
 import com.recipefinder.dao.UserDao;
 import com.recipefinder.dao.VoteDao;
+import com.recipefinder.model.Notification;
 import com.recipefinder.model.UndetectedItem;
 import com.recipefinder.model.UnknownEntry;
 import com.recipefinder.model.User;
@@ -40,6 +42,8 @@ public class RecipeService {
 	private VoteDao voteDao;
 	@Autowired
 	private NotificationDao notificationDao;
+	@Autowired
+	private Notification notification;
 	
 	
 	private static int userId = 0;
@@ -55,21 +59,21 @@ public class RecipeService {
 		}
 		return user.getUserId();	
 	}
-	public String getRecipe(File multipartImage, int userId) {
-	//public String getRecipe(MultipartFile multipartImage, int userId) {
+	//public String getRecipe(File multipartImage, int userId) {
+	public String getRecipe(MultipartFile multipartImage, int userId) {
 		// Receive image
-		// File image = new File("./images/"+multipartImage.getOriginalFilename());
+		 File image = new File("./images/"+multipartImage.getOriginalFilename());
 
-		File image = null;
+//		File image = null;
 		boolean op = false;
 		try {
-//			image.createNewFile();
-//			FileOutputStream outputStream = new FileOutputStream(image);
-//			outputStream.write(multipartImage.getBytes());
+			image.createNewFile();
+			FileOutputStream outputStream = new FileOutputStream(image);
+			outputStream.write(multipartImage.getBytes());
 			
-//			outputStream.close();
-			Files.copy(Paths.get(multipartImage.getPath()), Paths.get("./images/"+multipartImage.getName()), StandardCopyOption.REPLACE_EXISTING);
-			image = new File("./images/" + multipartImage.getName());
+			outputStream.close();
+//			Files.copy(Paths.get(multipartImage.getPath()), Paths.get("./images/"+multipartImage.getName()), StandardCopyOption.REPLACE_EXISTING);
+//			image = new File("./images/" + multipartImage.getName());
 			op = true;
 
 		} catch (Exception e) {			
@@ -79,6 +83,7 @@ public class RecipeService {
 			return "Error in creating file...";
 		else {
 			String recipeName = predictRecipe(image.getPath());
+//			String recipeName = "Unable to detect item. Please try again...";
 			String response;
 			if(recipeName == null || recipeName.isEmpty() || recipeName.equals("Unable to detect item. Please try again...")) {
 				response = "Unable to detect item. Please try again!";
@@ -132,8 +137,7 @@ public class RecipeService {
 		String data = null;
 		try {
 			data = recipeDao.getRecipeByName(recipeName);
-		} catch (JsonProcessingException e) {
-			// TODO Auto-generated catch block
+		} catch (JsonProcessingException e) {			
 			e.printStackTrace();
 		}
 		return data;
@@ -143,8 +147,8 @@ public class RecipeService {
 		boolean status = false;		
 		String newPath = "./undetected/" + userId +"_" + image.getName();
 		try {
-			Path path = Files.move(Paths.get(image.getPath()), Paths.get(newPath),StandardCopyOption.REPLACE_EXISTING);
-			status = undetectedItemDao.addItem(path.getFileName().toString(), userDao.getUserByUserId(userId));
+			Files.move(Paths.get(image.getPath()), Paths.get(newPath),StandardCopyOption.REPLACE_EXISTING);
+			status = undetectedItemDao.addItem(image.getName(), userDao.getUserByUserId(userId));
 			globalNotificationCount += 1;
 			sendNotification(userId);
 		} catch (Exception e) {
@@ -164,18 +168,21 @@ public class RecipeService {
 				if(temp.getName().equals(vote)) {
 					temp.setVotes(temp.getVotes() + 1);
 					if(temp.getVotes() >= 3) {
-						handleDetection(item.getCreator().getUserId() + "_" + fileName, vote);
-					}					
+						handleDetection(item.getCreator().getUserId() + "_" + fileName, vote, fileName);
+					}
+					else {
+						undetectedItemDao.updateItem(item);
+					}
 					return true;
 				}
 			}
 			item.getGuessedItems().offer(new UnknownEntry(vote, 1));
 			undetectedItemDao.updateItem(item);
 			if(voteDao.checkUserExistance(userId) == false) {
-				status = voteDao.addVote(userId, fileName);
+				status = voteDao.addVote(userDao.getUserByUserId(userId), undetectedItemDao.getItemByName(fileName));
 			}
 			else {
-				status = voteDao.updateVote(userId, fileName);
+				status = voteDao.updateVote(userDao.getUserByUserId(userId), undetectedItemDao.getItemByName(fileName));
 			}			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -184,7 +191,7 @@ public class RecipeService {
 		return status;
 	}
 	
-	public boolean handleDetection(String filePath, String result) {
+	public boolean handleDetection(String filePath, String result, String fileName) {
 		
 		boolean status = false;
 		try {
@@ -194,7 +201,7 @@ public class RecipeService {
 			// Move file to new directory (If there exists a file with same name it will be replaced.)
 			Files.move(Paths.get("./undetected/" + filePath), Paths.get("./dataset/" + result +"/" + filePath), StandardCopyOption.REPLACE_EXISTING);
 			// Delete entry from database
-			status = undetectedItemDao.deleteItem(filePath);
+			status = undetectedItemDao.deleteItem(fileName);
 			
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -233,14 +240,21 @@ public class RecipeService {
 	}
 	
 	public String sendNotification(int userId) {
-		
-		return Long.toString(globalNotificationCount - notificationDao.getNotificationCount(userDao.getUserByUserId(userId)));
+		notification = notificationDao.getNotificationEntry(userDao.getUserByUserId(userId));
+		long result = (globalNotificationCount - notification.getNoOfNotifications());
+		if(result > 0) {
+			notification.setNoOfNotifications(globalNotificationCount);
+			notificationDao.updateNotificationCount(notification);
+		}
+		return Long.toString(result);
 	}
 	
 	public String Test() {
-		int userId = getUserId("spatel");
-		File file = new File("./test/fal.jpg");
-		getRecipe(file, userId);
+//		int userId = getUserId("spatel");
+//		File file = new File("./test/fal.jpg");
+//		getRecipe(file, userId);
+//		getAllUndetectedItems();
+//		handleVote(file.getName(), "falooda", 1);
 		return "HI";
 	}
 		

@@ -5,7 +5,9 @@ import java.util.HashSet;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.stereotype.Component;
 
+@Component
 @Document(collection="Vote")
 public class Vote {
 	@Id
